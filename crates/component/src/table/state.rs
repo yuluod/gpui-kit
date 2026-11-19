@@ -1970,7 +1970,13 @@ where
                 .hover(|this| this.bg(cx.theme().tokens.secondary).opacity(7.))
                 .active(|this| this.bg(cx.theme().tokens.secondary_active).opacity(1.))
                 .on_click(
-                    cx.listener(move |table, _, window, cx| table.perform_sort(col_ix, window, cx)),
+                    cx.listener(move |table, _, window, cx| {
+                        // The header itself may sort on click too
+                        // (`sort_on_header_click`); keep the icon's click
+                        // from bubbling into a second sort.
+                        cx.stop_propagation();
+                        table.perform_sort(col_ix, window, cx);
+                    }),
                 )
                 .child(
                     Icon::new(icon)

@@ -498,7 +498,9 @@ mod tests {
             "a header click must not sort by default; sorted {sorts:?}"
         );
 
-        // Opted in: the same click sorts the column (Default -> Descending).
+        // Opted in: the same click sorts the column (Default -> Descending),
+        // and a click on the sort icon sorts exactly once — the icon's click
+        // must not bubble into the header's (#3952 review pattern).
         let sorts_for_delegate = sorts.clone();
         let (view, cx) = cx.add_window_view(move |window, cx| SortHarness {
             state: cx.new(|cx| {
@@ -515,11 +517,18 @@ mod tests {
         let _state = view.read_with(cx, |view, _| view.state.clone());
         cx.run_until_parked();
         cx.update(|window, cx| window.draw(cx).clear(cx));
-        cx.simulate_click(point(px(60.), px(16.)), Modifiers::default());
+        cx.simulate_click(point(px(60.), px(16.)), Default::default());
         assert_eq!(
             sorts.borrow().as_slice(),
             [(0, ColumnSort::Descending)],
             "an opted-in header click sorts the column"
+        );
+        sorts.borrow_mut().clear();
+        cx.simulate_click(point(px(77.), px(16.)), Default::default());
+        assert_eq!(
+            sorts.borrow().as_slice(),
+            [(0, ColumnSort::Ascending)],
+            "a click on the sort icon sorts exactly once, not twice"
         );
     }
 }
